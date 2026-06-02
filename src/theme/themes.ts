@@ -109,6 +109,21 @@ export function rgbToHex(r: number, g: number, b: number): string {
   return `#${to(r)}${to(g)}${to(b)}`;
 }
 
+/**
+ * Solid blend of `fg` over `bg` by ratio `t` (0..1). Use this instead of an
+ * alpha hex (e.g. `accent + '14'`) for tinted surfaces, because a translucent
+ * background combined with `elevation` renders a gray shadow box on Android.
+ */
+export function blend(fg: string, bg: string, t: number): string {
+  const a = hexToRgb(fg);
+  const b = hexToRgb(bg);
+  return rgbToHex(
+    b.r + (a.r - b.r) * t,
+    b.g + (a.g - b.g) * t,
+    b.b + (a.b - b.b) * t
+  );
+}
+
 /** Builds a full accent (with subtly distinct break phases) from a single user color. */
 export function buildCustomAccent(hex: string): Accent {
   return {

@@ -29,11 +29,8 @@ export default function TabsLayout() {
               testID={testID}
               onPress={(e) => onPress?.(e as GestureResponderEvent)}
               onLongPress={(e) => onLongPress?.(e as GestureResponderEvent)}
-              android_ripple={{ color: accent.work + '33', borderless: true, radius: 36 }}
-              style={({ pressed }) => [
-                style,
-                { alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 },
-              ]}
+              android_ripple={null}
+              style={[style, { alignItems: 'center', justifyContent: 'center' }]}
             >
               {children}
             </Pressable>

@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,10 +12,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { Stepper } from '@/components/ui';
 import { DEFAULT_TASK_TYPE, getTaskType, taskTypes } from '@/lib/taskTypes';
 import { useTasksStore, type Task } from '@/store/tasksStore';
-import { cardShadow } from '@/theme/themes';
+import { blend, cardShadow } from '@/theme/themes';
 import { useTheme } from '@/theme/useTheme';
 
 export default function TasksScreen() {
@@ -46,7 +46,8 @@ export default function TasksScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
+    <ScreenTransition>
+      <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
       <View style={styles.header}>
         <Text style={[styles.heading, { color: neutral.text }]}>Tareas</Text>
         {doneCount > 0 ? (
@@ -59,7 +60,9 @@ export default function TasksScreen() {
       <FlatList
         data={tasks}
         keyExtractor={(t) => t.id}
+        style={styles.flatList}
         contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           tasks.length > 0 ? (
             <View style={styles.summaryRow}>
@@ -89,10 +92,7 @@ export default function TasksScreen() {
         )}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
+      <KeyboardAvoidingView behavior="padding">
         <View style={[styles.composer, { backgroundColor: neutral.surface, borderColor: neutral.border }]}>
           <TextInput
             value={title}
@@ -157,6 +157,7 @@ export default function TasksScreen() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenTransition>
   );
 }
 
@@ -182,7 +183,7 @@ function TaskItem({
       style={[
         styles.task,
         {
-          backgroundColor: active ? accent + '14' : neutral.surface,
+          backgroundColor: active ? blend(accent, neutral.surface, dark ? 0.18 : 0.08) : neutral.surface,
           borderColor: active ? accent : neutral.border,
           borderWidth: active ? 1.5 : 1,
         },
@@ -272,6 +273,7 @@ const styles = StyleSheet.create({
   },
   heading: { fontSize: 28, fontWeight: '800' },
   clear: { fontSize: 13, fontWeight: '600' },
+  flatList: { flex: 1 },
   list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16, gap: 10 },
   summaryRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   summaryCard: {

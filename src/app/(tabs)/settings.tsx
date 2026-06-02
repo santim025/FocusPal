@@ -3,6 +3,7 @@ import Slider from '@react-native-community/slider';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { Card, Row, SectionTitle, Segmented, Stepper } from '@/components/ui';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTimerStore } from '@/store/timerStore';
@@ -19,7 +20,8 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
+    <ScreenTransition>
+      <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.heading, { color: neutral.text }]}>Ajustes</Text>
 
@@ -254,6 +256,7 @@ export default function SettingsScreen() {
         <Text style={[styles.version, { color: neutral.textMuted }]}>Cadencia v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
+    </ScreenTransition>
   );
 }
 

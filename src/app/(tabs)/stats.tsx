@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
 import { BarChart, type BarDatum } from '@/components/BarChart';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { Card, SectionTitle } from '@/components/ui';
 import { formatFocusDuration, todayKey, weekdayLabel } from '@/lib/time';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -31,7 +32,8 @@ export default function StatsScreen() {
   const activeDays = Object.values(days).filter((d) => d.pomodoros > 0).length;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
+    <ScreenTransition>
+      <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.heading, { color: neutral.text }]}>Estadísticas</Text>
 
@@ -114,6 +116,7 @@ export default function StatsScreen() {
         </Card>
       </ScrollView>
     </SafeAreaView>
+    </ScreenTransition>
   );
 }
 

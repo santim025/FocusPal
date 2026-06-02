@@ -1,11 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useEffect, useState } from 'react';
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle as SvgCircle, Path } from 'react-native-svg';
 
 import { AnimatedClock } from '@/components/AnimatedClock';
+import { AnimatedFace } from '@/components/AnimatedFace';
+import { ScreenTransition } from '@/components/ScreenTransition';
+import { loadAmbient, pauseAmbient, playAmbient, setAmbientVolume } from '@/lib/ambient';
+import { ambientSounds } from '@/lib/ambientSounds';
 import { getTaskType } from '@/lib/taskTypes';
 import { formatClockMeridiem, formatMmSs } from '@/lib/time';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -18,6 +22,11 @@ const KEEP_AWAKE_TAG = 'focuspal-timer';
 
 export default function TimerScreen() {
   const { neutral, accent, dark } = useTheme();
+  const { width, height } = useWindowDimensions();
+  // Responsive clock: shrink on short/narrow viewports so the centered block
+  // (clock + subtitle + dots + task chip + sounds) plus header/controls always
+  // fit without overflowing.
+  const clockSize = Math.max(170, Math.min(300, width - 96, height - 410));
 
   const phase = useTimerStore((s) => s.phase);
   const status = useTimerStore((s) => s.status);
@@ -37,6 +46,9 @@ export default function TimerScreen() {
   const cyclesBeforeLongBreak = useSettingsStore((s) => s.cyclesBeforeLongBreak);
   const keepAwake = useSettingsStore((s) => s.keepAwake);
   const showDigits = useSettingsStore((s) => s.showDigits);
+  const ambientSoundKey = useSettingsStore((s) => s.ambientSoundKey);
+  const ambientVolume = useSettingsStore((s) => s.ambientVolume);
+  const setSetting = useSettingsStore((s) => s.set);
 
   const tasks = useTasksStore((s) => s.tasks);
   const activeTaskId = useTasksStore((s) => s.activeTaskId);
@@ -91,6 +103,25 @@ export default function TimerScreen() {
     }
   }, [status, keepAwake]);
 
+  useEffect(() => {
+    loadAmbient(ambientSoundKey);
+  }, [ambientSoundKey]);
+
+  useEffect(() => {
+    setAmbientVolume(ambientVolume);
+  }, [ambientVolume]);
+
+  // Ambient sound plays only while a focus (work) session is actually running.
+  useEffect(() => {
+    if (phase === 'work' && status === 'running' && ambientSoundKey !== 'none') {
+      playAmbient();
+    } else {
+      pauseAmbient();
+    }
+  }, [phase, status, ambientSoundKey]);
+
+  useEffect(() => () => pauseAmbient(), []);
+
   const remaining =
     status === 'running' && endTimestamp != null
       ? Math.min(remainingMs, Math.max(0, endTimestamp - now))
@@ -106,7 +137,8 @@ export default function TimerScreen() {
   const finishAt = status === 'running' && endTimestamp != null ? endTimestamp : now + remaining;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
+    <ScreenTransition>
+      <SafeAreaView style={[styles.safe, { backgroundColor: neutral.background }]} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.brand}>
           <View style={[styles.brandMark, { backgroundColor: phaseColor }]}>
@@ -129,9 +161,10 @@ export default function TimerScreen() {
         </View>
       </View>
 
-      <View style={styles.ringWrap}>
+      <View style={styles.middle}>
+        <View style={styles.ringWrap}>
         <AnimatedClock
-          size={300}
+          size={clockSize}
           progress={progress}
           color={displayColor}
           trackColor={neutral.track}
@@ -140,7 +173,9 @@ export default function TimerScreen() {
         >
           {showDigits ? (
             <View style={styles.readout}>
-              <Text style={[styles.time, { color: displayColor }]}>{formatMmSs(remaining)}</Text>
+              <Text style={[styles.time, { color: displayColor, fontSize: Math.round(clockSize * 0.2) }]}>
+                {formatMmSs(remaining)}
+              </Text>
               <View style={styles.finishRow}>
                 <Ionicons name="flag-outline" size={14} color={neutral.textMuted} />
                 <Text style={[styles.finishText, { color: neutral.textMuted }]}>
@@ -149,7 +184,12 @@ export default function TimerScreen() {
               </View>
             </View>
           ) : (
-            <Ionicons name={running ? 'pause' : 'play'} size={88} color={displayColor} />
+            <AnimatedFace
+              size={Math.round(clockSize * 0.52)}
+              color={displayColor}
+              mood={phase === 'work' ? 'focus' : 'rest'}
+              running={running}
+            />
           )}
         </AnimatedClock>
         <Text style={[styles.phaseUnder, { color: neutral.textMuted }]}>{phaseSubtitle(phase)}</Text>
@@ -196,6 +236,42 @@ export default function TimerScreen() {
         </Text>
       )}
 
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.ambientScroll}
+        contentContainerStyle={[styles.ambientRow, { minWidth: '100%' }]}
+      >
+        {ambientSounds.map((s) => {
+          const selected = s.key === ambientSoundKey;
+          return (
+            <Pressable
+              key={s.key}
+              onPress={() => setSetting({ ambientSoundKey: s.key })}
+              style={[
+                styles.ambientChip,
+                {
+                  backgroundColor: selected ? accent.work : neutral.surfaceAlt,
+                  borderColor: selected ? accent.work : neutral.border,
+                },
+              ]}
+            >
+              <Ionicons
+                name={s.icon}
+                size={15}
+                color={selected ? '#fff' : neutral.textMuted}
+              />
+              <Text
+                style={[styles.ambientChipText, { color: selected ? '#fff' : neutral.text }]}
+              >
+                {s.name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      </View>
+
       <View style={styles.controls}>
         <Pressable
           onPress={reset}
@@ -216,7 +292,12 @@ export default function TimerScreen() {
           ]}
           hitSlop={8}
         >
-          <Ionicons name={running ? 'pause' : 'play'} size={38} color="#fff" />
+          <Ionicons
+            name={running ? 'pause' : 'play'}
+            size={38}
+            color="#fff"
+            style={running ? undefined : { marginLeft: 3 }}
+          />
         </Pressable>
 
         <Pressable
@@ -228,6 +309,7 @@ export default function TimerScreen() {
         </Pressable>
       </View>
     </SafeAreaView>
+    </ScreenTransition>
   );
 }
 
@@ -271,7 +353,8 @@ const styles = StyleSheet.create({
   },
   phaseDot: { width: 8, height: 8, borderRadius: 4 },
   phaseBadgeText: { fontSize: 13, fontWeight: '700' },
-  ringWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  middle: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 18 },
+  ringWrap: { alignItems: 'center', gap: 14 },
   readout: { alignItems: 'center', gap: 6 },
   time: { fontSize: 62, fontWeight: '600', fontVariant: ['tabular-nums'] },
   finishRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
@@ -294,12 +377,30 @@ const styles = StyleSheet.create({
   taskChipText: { fontSize: 14, fontWeight: '600', flexShrink: 1 },
   taskChipCount: { fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'] },
   noTask: { fontSize: 13, textAlign: 'center' },
+  ambientScroll: { flexGrow: 0, flexShrink: 0, alignSelf: 'stretch' },
+  ambientRow: {
+    gap: 8,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ambientChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  ambientChipText: { fontSize: 13, fontWeight: '600' },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 28,
-    paddingVertical: 32,
+    gap: 22,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
   mainBtn: {
     width: 84,

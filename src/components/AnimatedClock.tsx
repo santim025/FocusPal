@@ -53,9 +53,11 @@ export function AnimatedClock({
   children,
 }: AnimatedClockProps) {
   const clamped = Math.max(0, Math.min(1, progress));
-  // Remaining arc, pinned to 12 o'clock; the empty gap grows clockwise.
+  // The empty gap grows clockwise from 12 o'clock; the remaining (colored) arc
+  // therefore starts at the consumed edge and sweeps round back to the top.
   const remainingLength = (1 - clamped) * CIRC;
-  const guide = polar(RADIUS, clamped * 360);
+  const consumedAngle = clamped * 360;
+  const guide = polar(RADIUS, consumedAngle);
 
   const scale = useSharedValue(1);
 
@@ -106,7 +108,8 @@ export function AnimatedClock({
           fill="none"
           opacity={0.6}
         />
-        {/* Progress arc: drains from the top, clockwise */}
+        {/* Progress arc: starts at the consumed edge and sweeps to the top, so
+            the empty gap opens at 12 o'clock and grows clockwise as time runs. */}
         <Circle
           cx={C}
           cy={C}
@@ -116,7 +119,7 @@ export function AnimatedClock({
           strokeLinecap="round"
           fill="none"
           strokeDasharray={`${remainingLength} ${CIRC}`}
-          transform={`rotate(-90 ${C} ${C})`}
+          transform={`rotate(${-90 + consumedAngle} ${C} ${C})`}
         />
         {/* Guide dot on the consumed edge */}
         <Circle cx={guide.x} cy={guide.y} r={2.6} fill={color} />

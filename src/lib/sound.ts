@@ -5,7 +5,11 @@ let ready = false;
 
 export async function initSound(): Promise<void> {
   try {
-    await setAudioModeAsync({ playsInSilentMode: true });
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: 'mixWithOthers',
+    });
     player = createAudioPlayer(require('@/assets/sounds/chime.wav'));
     ready = true;
   } catch {
