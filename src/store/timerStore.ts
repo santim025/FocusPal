@@ -105,7 +105,7 @@ function phaseAccentColor(phase: Phase): string {
 function showOngoing(phase: Phase, endTimestamp: number) {
   const label = PHASE_LABEL[phase];
   const body = `Termina a las ${formatClock(endTimestamp)}`;
-  void presentOngoingTimer(`FocusPal · ${label}`, body, phaseAccentColor(phase));
+  void presentOngoingTimer(`Cadencia · ${label}`, body, phaseAccentColor(phase));
 }
 
 function hideOngoing() {

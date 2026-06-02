@@ -19,6 +19,7 @@ export interface SettingsState {
   appearance: Appearance;
   accentKey: string;
   customAccent: string;
+  showDigits: boolean;
   hydrated: boolean;
   set: (patch: Partial<SettingsState>) => void;
   reset: () => void;
@@ -39,6 +40,7 @@ export const DEFAULT_SETTINGS = {
   appearance: 'system' as Appearance,
   accentKey: defaultAccentKey,
   customAccent: defaultCustomColor,
+  showDigits: true,
 };
 
 export const useSettingsStore = create<SettingsState>()(

@@ -9,6 +9,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { cardShadow } from '@/theme/themes';
 import { useTheme } from '@/theme/useTheme';
 
 export function Card({
@@ -18,12 +19,13 @@ export function Card({
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { neutral } = useTheme();
+  const { neutral, dark } = useTheme();
   return (
     <View
       style={[
         styles.card,
         { backgroundColor: neutral.surface, borderColor: neutral.border },
+        cardShadow(dark),
         style,
       ]}
     >
@@ -121,7 +123,17 @@ export function Segmented<T extends string>({
           <Pressable
             key={opt.value}
             onPress={() => onChange(opt.value)}
-            style={[styles.segment, active && { backgroundColor: accent.work }]}
+            style={[
+              styles.segment,
+              active && {
+                backgroundColor: accent.work,
+                shadowColor: accent.work,
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 2,
+              },
+            ]}
           >
             <Text
               style={[
@@ -140,15 +152,15 @@ export function Segmented<T extends string>({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 20,
+    borderWidth: 1,
     padding: 16,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 1.5,
     marginBottom: 8,
     marginLeft: 4,
   },
@@ -159,9 +171,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   rowIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -176,7 +188,7 @@ const styles = StyleSheet.create({
   stepperBtn: {
     width: 34,
     height: 34,
-    borderRadius: 10,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -185,10 +197,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     minWidth: 34,
     textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
   segmented: {
     flexDirection: 'row',
-    borderRadius: 12,
+    borderRadius: 13,
     padding: 4,
     gap: 4,
   },

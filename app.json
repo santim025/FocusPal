@@ -1,21 +1,20 @@
 {
   "expo": {
-    "name": "FocusPal",
-    "slug": "FocusPal",
+    "name": "Cadencia",
+    "slug": "cadencia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "focuspal",
+    "scheme": "cadencia",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png"
     },
     "android": {
-      "package": "com.santicm025.focuspal",
+      "package": "com.santicm025.cadencia",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#E1493B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -35,7 +34,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#E1493B",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
@@ -51,7 +50,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "92511c2f-0d66-44f6-9752-da582e2dd37d"
+        "projectId": "8df68fee-f6ed-4865-8e56-78ec424f3cea"
       }
     },
     "owner": "santicm025"

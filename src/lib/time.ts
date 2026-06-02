@@ -22,6 +22,14 @@ export function formatClock(timestamp: number): string {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
+export function formatClockMeridiem(timestamp: number): string {
+  const d = new Date(timestamp);
+  const h24 = d.getHours();
+  const meridiem = h24 < 12 ? 'a.m.' : 'p.m.';
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${pad2(d.getMinutes())} ${meridiem}`;
+}
+
 function dateKey(d: Date): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }

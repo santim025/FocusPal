@@ -1,4 +1,6 @@
-# FocusPal
+# Cadencia
+
+> Encuentra tu ritmo.
 
 Aplicación móvil de productividad basada en la **técnica Pomodoro**, construida con React Native + Expo. Inspirada en apps como [Pomodoro Timer](https://play.google.com/store/apps/details?id=com.pomodrone.app).
 

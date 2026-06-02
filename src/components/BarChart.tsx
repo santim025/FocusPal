@@ -25,7 +25,7 @@ export function BarChart({ data, color, height = 140 }: BarChartProps) {
         const barHeight = Math.max(d.value > 0 ? 6 : 2, ratio * (height - 28));
         return (
           <View key={`${d.label}-${i}`} style={styles.column}>
-            <Text style={[styles.value, { color: neutral.textMuted }]}>
+            <Text style={[styles.value, { color: d.highlight ? color : neutral.textMuted }]}>
               {d.value > 0 ? d.value : ''}
             </Text>
             <View
@@ -33,12 +33,19 @@ export function BarChart({ data, color, height = 140 }: BarChartProps) {
                 styles.bar,
                 {
                   height: barHeight,
-                  backgroundColor: d.value > 0 ? color : neutral.track,
-                  opacity: d.highlight ? 1 : 0.85,
+                  backgroundColor: d.highlight ? color : neutral.track,
                 },
               ]}
             />
-            <Text style={[styles.label, { color: d.highlight ? color : neutral.textMuted }]}>
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: d.highlight ? neutral.text : neutral.textMuted,
+                  fontWeight: d.highlight ? '700' : '600',
+                },
+              ]}
+            >
               {d.label}
             </Text>
           </View>
@@ -63,11 +70,13 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: '70%',
-    borderRadius: 6,
+    maxWidth: 26,
+    borderRadius: 8,
   },
   value: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   label: {
     fontSize: 12,

@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -7,54 +8,62 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Circle, G, Line, Rect } from 'react-native-svg';
+import Svg, { Circle, Line } from 'react-native-svg';
 
 interface AnimatedClockProps {
   size: number;
-  /** Fraction elapsed, 0 = full dial, 1 = empty. */
+  /** Fraction elapsed, 0 = full ring, 1 = empty. */
   progress: number;
-  /** Seconds hand angle in degrees (driven by real elapsed time, ticks per second). */
-  secondsAngle: number;
   color: string;
   trackColor: string;
   running: boolean;
-  /** When true (time almost up) the stopwatch pulses faster to signal urgency. */
+  /** When true (time almost up) the ring pulses faster to signal urgency. */
   ending?: boolean;
+  /** Digital readout / icon rendered centered over the ring. */
+  children?: ReactNode;
 }
 
 // Everything is laid out in a 100x100 viewBox so it scales to any `size`.
 const VB = 100;
-const CX = 50;
-const CY = 57;
-const RADIUS = 36;
-const STROKE = 6;
+const C = 50;
+const RADIUS = 42;
 const CIRC = 2 * Math.PI * RADIUS;
-const HAND_LENGTH = 25;
+const TICK_OUTER = 47.5;
+
+function polar(radius: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: C + radius * Math.cos(rad), y: C + radius * Math.sin(rad) };
+}
+
+const TICKS = Array.from({ length: 60 }, (_, i) => {
+  const major = i % 5 === 0;
+  const inner = major ? 43.2 : 45;
+  const outer = polar(TICK_OUTER, i * 6);
+  const start = polar(inner, i * 6);
+  return { major, x1: start.x, y1: start.y, x2: outer.x, y2: outer.y };
+});
 
 export function AnimatedClock({
   size,
   progress,
-  secondsAngle,
   color,
   trackColor,
   running,
   ending = false,
+  children,
 }: AnimatedClockProps) {
   const clamped = Math.max(0, Math.min(1, progress));
-  // Remaining arc of the dial. Pinned to the top (12 o'clock); the empty gap
-  // grows clockwise from the top as time goes down.
+  // Remaining arc, pinned to 12 o'clock; the empty gap grows clockwise.
   const remainingLength = (1 - clamped) * CIRC;
-  const startAngle = -90 + clamped * 360;
-  // The hand points at the consumed edge and sweeps down as time passes.
-  const handAngle = clamped * 360;
+  const guide = polar(RADIUS, clamped * 360);
 
   const scale = useSharedValue(1);
 
   useEffect(() => {
     if (running) {
       scale.value = withRepeat(
-        withTiming(ending ? 1.1 : 1.05, {
-          duration: ending ? 480 : 1000,
+        withTiming(1.025, {
+          duration: ending ? 1000 : 3400,
           easing: Easing.inOut(Easing.ease),
         }),
         -1,
@@ -73,79 +82,60 @@ export function AnimatedClock({
   return (
     <Animated.View style={[{ width: size, height: size }, animatedStyle]}>
       <Svg width={size} height={size} viewBox={`0 0 ${VB} ${VB}`}>
-        {/* Top crown / button so it reads as a stopwatch ("00" at the top) */}
-        <Rect x={CX - 7} y={3} width={14} height={8} rx={3} fill={color} />
-        <Rect x={CX - 3.5} y={10} width={7} height={12} rx={2} fill={color} />
-        {/* Side lugs */}
-        <Rect
-          x={CX - 30}
-          y={20}
-          width={11}
-          height={6}
-          rx={3}
-          fill={color}
-          transform={`rotate(-45 ${CX - 24} ${24})`}
-        />
-        <Rect
-          x={CX + 19}
-          y={20}
-          width={11}
-          height={6}
-          rx={3}
-          fill={color}
-          transform={`rotate(45 ${CX + 24} ${24})`}
-        />
+        {TICKS.map((t, i) => (
+          <Line
+            key={i}
+            x1={t.x1}
+            y1={t.y1}
+            x2={t.x2}
+            y2={t.y2}
+            stroke={trackColor}
+            strokeWidth={t.major ? 1.1 : 0.6}
+            strokeLinecap="round"
+            opacity={t.major ? 0.9 : 0.55}
+          />
+        ))}
 
-        {/* Dial track (faint full circle) */}
+        {/* Base ring */}
         <Circle
-          cx={CX}
-          cy={CY}
+          cx={C}
+          cy={C}
           r={RADIUS}
           stroke={trackColor}
-          strokeWidth={STROKE}
+          strokeWidth={4}
           fill="none"
+          opacity={0.6}
         />
-        {/* Depleting dial: this IS the timer line, draining from the top */}
+        {/* Progress arc: drains from the top, clockwise */}
         <Circle
-          cx={CX}
-          cy={CY}
+          cx={C}
+          cy={C}
           r={RADIUS}
           stroke={color}
-          strokeWidth={STROKE}
+          strokeWidth={4.5}
           strokeLinecap="round"
           fill="none"
           strokeDasharray={`${remainingLength} ${CIRC}`}
-          transform={`rotate(${startAngle} ${CX} ${CY})`}
+          transform={`rotate(-90 ${C} ${C})`}
         />
-
-        {/* Progress hand: sweeps slowly with the consumed edge */}
-        <G transform={`rotate(${handAngle} ${CX} ${CY})`}>
-          <Line
-            x1={CX}
-            y1={CY}
-            x2={CX}
-            y2={CY - HAND_LENGTH}
-            stroke={color}
-            strokeWidth={3.5}
-            strokeLinecap="round"
-          />
-        </G>
-        {/* Seconds hand: ticks once per second (driven by real elapsed time) */}
-        <G transform={`rotate(${secondsAngle} ${CX} ${CY})`}>
-          <Line
-            x1={CX}
-            y1={CY + 7}
-            x2={CX}
-            y2={CY - (HAND_LENGTH + 6)}
-            stroke={color}
-            strokeWidth={1.4}
-            strokeLinecap="round"
-            opacity={0.7}
-          />
-        </G>
-        <Circle cx={CX} cy={CY} r={5.5} fill={color} />
-        <Circle cx={CX} cy={CY} r={2.5} fill={trackColor} />
+        {/* Guide dot on the consumed edge */}
+        <Circle cx={guide.x} cy={guide.y} r={2.6} fill={color} />
       </Svg>
+      <View style={styles.center} pointerEvents="none">
+        {children}
+      </View>
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  center: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

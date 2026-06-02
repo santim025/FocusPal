@@ -62,6 +62,25 @@ export const accents: Accent[] = [
   { key: 'lavender', name: 'Lavanda', work: '#7C6CF0', shortBreak: '#34C3A0', longBreak: '#E36FB0' },
 ];
 
+export interface CardShadow {
+  shadowColor: string;
+  shadowOpacity: number;
+  shadowRadius: number;
+  shadowOffset: { width: number; height: number };
+  elevation: number;
+}
+
+/** Subtle, consistent card elevation shared across screens. */
+export function cardShadow(dark: boolean): CardShadow {
+  return {
+    shadowColor: '#161828',
+    shadowOpacity: dark ? 0.35 : 0.06,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  };
+}
+
 export const defaultAccentKey = 'tomato';
 
 export const customAccentKey = 'custom';

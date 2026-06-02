@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stepper } from '@/components/ui';
 import { DEFAULT_TASK_TYPE, getTaskType, taskTypes } from '@/lib/taskTypes';
 import { useTasksStore, type Task } from '@/store/tasksStore';
+import { cardShadow } from '@/theme/themes';
 import { useTheme } from '@/theme/useTheme';
 
 export default function TasksScreen() {
@@ -34,6 +35,7 @@ export default function TasksScreen() {
 
   const pending = tasks.filter((t) => !t.done);
   const doneCount = tasks.length - pending.length;
+  const plannedPomodoros = pending.reduce((acc, t) => acc + t.estimatedPomodoros, 0);
 
   const submit = () => {
     if (!title.trim()) return;
@@ -58,6 +60,15 @@ export default function TasksScreen() {
         data={tasks}
         keyExtractor={(t) => t.id}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={
+          tasks.length > 0 ? (
+            <View style={styles.summaryRow}>
+              <SummaryCard value={pending.length} label="pendientes" />
+              <SummaryCard value={plannedPomodoros} label="pomodoros plan." color={accent.work} />
+              <SummaryCard value={doneCount} label="hechas" />
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="clipboard-outline" size={48} color={neutral.textMuted} />
@@ -164,17 +175,18 @@ function TaskItem({
   onDelete: () => void;
   onSelect: () => void;
 }) {
-  const { neutral } = useTheme();
+  const { neutral, dark } = useTheme();
   return (
     <Pressable
       onPress={onSelect}
       style={[
         styles.task,
         {
-          backgroundColor: neutral.surface,
+          backgroundColor: active ? accent + '14' : neutral.surface,
           borderColor: active ? accent : neutral.border,
-          borderWidth: active ? 1.5 : StyleSheet.hairlineWidth,
+          borderWidth: active ? 1.5 : 1,
         },
+        active && cardShadow(dark),
       ]}
     >
       <Pressable onPress={onToggle} hitSlop={8}>
@@ -194,19 +206,57 @@ function TaskItem({
           numberOfLines={2}
         >
           {task.title}
+          {active ? <Text style={[styles.activeTag, { color: accent }]}> · ACTIVA</Text> : null}
         </Text>
         <View style={styles.taskMetaRow}>
           <Ionicons name={getTaskType(task.typeKey).icon as never} size={12} color={neutral.textMuted} />
           <Text style={[styles.taskMeta, { color: neutral.textMuted }]}>
-            {getTaskType(task.typeKey).name} · {task.completedPomodoros}/{task.estimatedPomodoros}
-            {active ? ' · activa' : ''}
+            {getTaskType(task.typeKey).name}
           </Text>
+          <Pips done={task.completedPomodoros} total={task.estimatedPomodoros} color={accent} />
         </View>
       </View>
       <Pressable onPress={onDelete} hitSlop={8}>
         <Ionicons name="trash-outline" size={20} color={neutral.textMuted} />
       </Pressable>
     </Pressable>
+  );
+}
+
+function SummaryCard({ value, label, color }: { value: number; label: string; color?: string }) {
+  const { neutral, dark } = useTheme();
+  return (
+    <View
+      style={[
+        styles.summaryCard,
+        { backgroundColor: neutral.surface, borderColor: neutral.border },
+        cardShadow(dark),
+      ]}
+    >
+      <Text style={[styles.summaryValue, { color: color ?? neutral.text }]}>{value}</Text>
+      <Text style={[styles.summaryLabel, { color: neutral.textMuted }]}>{label}</Text>
+    </View>
+  );
+}
+
+const MAX_PIPS = 8;
+
+function Pips({ done, total, color }: { done: number; total: number; color: string }) {
+  const { neutral } = useTheme();
+  const shown = Math.min(total, MAX_PIPS);
+  const overflow = total - shown;
+  return (
+    <View style={styles.pips}>
+      {Array.from({ length: shown }).map((_, i) => (
+        <View
+          key={i}
+          style={[styles.pip, { backgroundColor: i < done ? color : neutral.track }]}
+        />
+      ))}
+      {overflow > 0 ? (
+        <Text style={[styles.pipOverflow, { color: neutral.textMuted }]}>+{overflow}</Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -223,6 +273,17 @@ const styles = StyleSheet.create({
   heading: { fontSize: 28, fontWeight: '800' },
   clear: { fontSize: 13, fontWeight: '600' },
   list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16, gap: 10 },
+  summaryRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  summaryCard: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    gap: 2,
+  },
+  summaryValue: { fontSize: 22, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  summaryLabel: { fontSize: 11, fontWeight: '500' },
   empty: { alignItems: 'center', gap: 12, paddingTop: 80, paddingHorizontal: 40 },
   emptyText: { textAlign: 'center', fontSize: 14, lineHeight: 20 },
   task: {
@@ -230,17 +291,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
   },
   taskBody: { flex: 1 },
   taskTitle: { fontSize: 15, fontWeight: '600' },
-  taskMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+  activeTag: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6 },
+  taskMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   taskMeta: { fontSize: 12 },
+  pips: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  pip: { width: 7, height: 7, borderRadius: 3.5 },
+  pipOverflow: { fontSize: 11, fontWeight: '600', marginLeft: 2 },
   composer: {
     margin: 12,
     padding: 12,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
+    borderWidth: 1,
     gap: 10,
   },
   input: { fontSize: 16, paddingVertical: 4 },
@@ -251,8 +316,8 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   typeChipText: { fontSize: 13, fontWeight: '600' },
   typeHint: { fontSize: 12, marginTop: -2 },
@@ -264,9 +329,9 @@ const styles = StyleSheet.create({
   estimateRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   estimateLabel: { fontSize: 13, fontWeight: '600' },
   addBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

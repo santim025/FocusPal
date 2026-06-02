@@ -156,6 +156,19 @@ export default function SettingsScreen() {
 
         <SectionTitle>Apariencia</SectionTitle>
         <Card>
+          <Row
+            icon="time-outline"
+            label="Mostrar tiempo digital"
+            description="MM:SS en el centro del reloj"
+            right={
+              <Switch
+                value={s.showDigits}
+                onValueChange={(v) => s.set({ showDigits: v })}
+                trackColor={{ true: accent.work }}
+              />
+            }
+          />
+          <Divider />
           <Segmented<Appearance>
             value={s.appearance}
             onChange={(v) => s.set({ appearance: v })}
@@ -238,7 +251,7 @@ export default function SettingsScreen() {
           <Text style={[styles.resetText, { color: neutral.danger }]}>Restablecer ajustes</Text>
         </Pressable>
 
-        <Text style={[styles.version, { color: neutral.textMuted }]}>FocusPal v1.0.0</Text>
+        <Text style={[styles.version, { color: neutral.textMuted }]}>Cadencia v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -297,8 +310,8 @@ const styles = StyleSheet.create({
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
   swatchWrap: { alignItems: 'center', gap: 6, width: 64 },
   swatch: {
-    width: 48,
-    height: 48,
+    width: 46,
+    height: 46,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
